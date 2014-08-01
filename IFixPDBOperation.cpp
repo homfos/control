@@ -9,9 +9,74 @@ extern "C"
 #include <fixeda.h> // iFIX / DMACS header files
 }
 
+void IFixPDBOperation::SetErrorMesage(int index, std::string msg)
+{
+	std::string tagName = "OCCPOW_CKKP002_00" + std::to_string(static_cast<long long>(index));
+
+	INT16 err;
+	GNUM group = eda_define_group(1, 0);
+	THANDLE	ntf = eda_define_ntf(group, const_cast<char *>(nodeName.c_str()),
+		const_cast<char *>(tagName.c_str()),
+		const_cast<char *>("a_cv"),
+		NULL);
+
+	eda_lookup(group);
+	eda_wait(group);
+	// float value_float;
+	err = eda_set_ascii(group, ntf, const_cast<char *>(msg.c_str()));
+
+	eda_write(group);
+	eda_wait(group);
+
+	eda_delete_ntf(group, ntf);
+	eda_delete_group(group);
+	BOOST_LOG_TRIVIAL(info) << std::string("Write PDB") + "["+ tagName +"]:"+ msg;
+}
+
 void IFixPDBOperation::SetCheckResult(int result)
 {
+	WritePDBValue("OCCPOW_CKKP001_002", result);
+}
 
+void IFixPDBOperation::SetActoinResult(std::string node, int commandValue)
+{
+	std::string tagName = "OCCPOW_CKKP" + node + "_"+"666";
+	WritePDBValue(tagName.c_str(), commandValue);
+}
+
+void IFixPDBOperation::SetActoinResult(std::string node, std::string actionClass, int typeId)
+{
+	std::string tagName = "OCCPOW_CKKP" + node + "_"+actionClass.substr(actionClass.length() - 3);
+	std::string objectClass = actionClass.substr(0, 3);
+	int commandValue = -100;
+	if (objectClass == "DLQ")
+	{
+		if (typeId == EXECUTE_OFF)
+		{
+			commandValue = 1;
+		}
+		else if (typeId = EXECUTE_ON)
+		{
+			commandValue = 2;
+		}
+	}
+	else if (objectClass == "DDK")
+	{
+		if (typeId == EXECUTE_OFF)
+		{
+			commandValue = 3;
+		}
+		else if (typeId = EXECUTE_ON)
+		{
+			commandValue = 4;
+		}
+	}
+	else
+	{
+		BOOST_LOG_TRIVIAL(error) << "设备类型错误";
+		return;
+	}
+	WritePDBValue(tagName.c_str(), commandValue);
 }
 
 bool IFixPDBOperation::WritePDBValue(const char* tagName, float value) const 
@@ -23,7 +88,7 @@ bool IFixPDBOperation::WritePDBValue(const char* tagName, float value) const
 		const_cast<char *>("F_CV"),
 		NULL);
 
-	eda_lookup(group);
+//	eda_lookup(group);
 	eda_lookup(group);
 	eda_wait(group);
 	// float value_float;
@@ -43,14 +108,12 @@ bool IFixPDBOperation::WritePDBValue(const char* tagName, float value) const
 		return false;
 }
 
-bool IFixPDBOperation::ReadPDBValue( const char* tagName , float &value) const
+bool IFixPDBOperation::ReadPDBValue( const char* tagName, int &res) const
 {
-
-	float Tagdata = 0;
-	
 	GNUM eh;
 	THANDLE hT;
 	INT16 err;
+	float value;
 
 	eh = eda_define_group(1,0);	
 
@@ -74,7 +137,7 @@ bool IFixPDBOperation::ReadPDBValue( const char* tagName , float &value) const
 	    eda_delete_group(eh);
 
 		BOOST_LOG_TRIVIAL(info) << std::string("Read PDB") + "["+ tagName +"]:"+ std::to_string(static_cast<long double>(value)) + " Return Number: " + std::to_string((long long)err);
-
+		res = value;
 	    if (err == 0)
 	        return true;
 	    else

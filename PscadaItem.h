@@ -91,13 +91,14 @@
 #define ACTIONSEQID_ 8
 #define INTERLOCK_ID_ 9
 #define STA_ALIAS_ 10
+#define DEV_CLASS_ID_ 11
 
-#define ALL_LINE_ON 0
-#define ALL_LINE_Off 1
-#define UP_MOVE_ON 2
-#define UP_MOVE_OFF 3
-#define DOWN_MOVE_ON 4
-#define DOWN_MOVE_OFF 5
+#define ALL_LINE_ON 201
+#define ALL_LINE_Off 200
+#define UP_MOVE_ON 205
+#define UP_MOVE_OFF 204
+#define DOWN_MOVE_ON 203
+#define DOWN_MOVE_OFF 202
 
 #define START_CARD_EXECUTE 1
 #define STOP_CARD_EXECUTE 2

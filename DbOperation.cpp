@@ -1,14 +1,8 @@
 #include "stdafx.h"
 #include "DbOperation.h"
 
-//log4cpp::Category& DbOperation::log(log4cpp::Category::getInstance(std::string("sub1.sub2")));
 SAConnection DbOperation::con;
-::vector<std::vector<std::string>> DbOperation::allLineOn;
-std::vector<std::vector<std::string>> DbOperation::allLineOff;
-std::vector<std::vector<std::string>> DbOperation::upMoveOn;
-std::vector<std::vector<std::string>> DbOperation::upMoveOff;
-std::vector<std::vector<std::string>> DbOperation::downMoveOn;
-std::vector<std::vector<std::string>> DbOperation::downMoveOff;
+map<int, vector<vector<string>>> DbOperation::actionsInfo;
 map<int, vector<string>> DbOperation::interLockDetail;
 map<pair<int, int>, string> DbOperation::tOrf;
 
@@ -20,12 +14,12 @@ DbOperation::~DbOperation()
 {
 }
 
-void DbOperation::LoadActoinInfo(vector <vector <string> > &actionsContent, string cardId)
+void DbOperation::LoadActoinInfo(map<int, vector <vector <string> >> &actionsContent, int cardId)
 {
 	std::string sqlStr;
-	sqlStr = "select * from T_SCADA_ACTIONCOLL where cardid = " + cardId;
+	sqlStr = "select * from T_SCADA_ACTIONCOLL where cardid = " + std::to_string(static_cast<long long>(cardId));
 //	sqlStr.append(" order by ACTIONSEQID");
-
+	vector <vector <string>> actions;
 	try
 	{
 		DbOperation::connect_db();
@@ -45,25 +39,29 @@ void DbOperation::LoadActoinInfo(vector <vector <string> > &actionsContent, stri
 			action.push_back(std::to_string(static_cast<long long>(cmd.Field("ACTIONSEQID").asLong())));
 			action.push_back(std::to_string(static_cast<long long>(cmd.Field("INTERLOCK_ID").asLong())));
 			action.push_back(std::string(cmd.Field("STA_ALIAS").asString()));
-			actionsContent.push_back(action);
+			action.push_back(std::string(cmd.Field("DEV_CLASS_ID").asString()));
+			actions.push_back(action);
 		}
-		BOOST_LOG_TRIVIAL(info) << "加载卡片动作序列成功！";
+		actionsContent[cardId] = actions; 
+		BOOST_LOG_TRIVIAL(info) << "加载卡片: " + std::to_string(static_cast<long long>(cardId));
 	}
 	catch (SAException& e)
 	{
-		actionsContent.clear();
+		BOOST_LOG_TRIVIAL(fatal) << e.ErrText();
+		BOOST_LOG_TRIVIAL(info) << "加载卡片动作序列失败！";
 		return;
 	}
 }
 
 void DbOperation::LoadActionInfo()
 {
-	LoadActoinInfo(allLineOn, "212");
-	LoadActoinInfo(allLineOff, "212");
-	LoadActoinInfo(upMoveOn, "210");
-	LoadActoinInfo(upMoveOff, "210");
-	LoadActoinInfo(downMoveOn, "210");
-	LoadActoinInfo(downMoveOff, "210");
+	//LoadActoinInfo(actionsInfo, 212);
+	LoadActoinInfo(actionsInfo, ALL_LINE_ON);
+	LoadActoinInfo(actionsInfo, ALL_LINE_Off);
+	LoadActoinInfo(actionsInfo, UP_MOVE_ON);
+	LoadActoinInfo(actionsInfo, UP_MOVE_OFF);
+	LoadActoinInfo(actionsInfo, DOWN_MOVE_ON);
+	LoadActoinInfo(actionsInfo, DOWN_MOVE_OFF);
 	LoadInterLock();
 	LoadInterLockResult();
 }
@@ -100,6 +98,8 @@ void DbOperation::LoadInterLock()
 	}
 	catch (SAException& e)
 	{
+		BOOST_LOG_TRIVIAL(fatal) << e.ErrText();
+		BOOST_LOG_TRIVIAL(fatal) << "加载闭锁逻辑基础信息失败！";
 		return;
 	}
 }
@@ -123,6 +123,8 @@ void DbOperation::LoadInterLockResult()
 	}
 	catch (SAException& e)
 	{
+		BOOST_LOG_TRIVIAL(fatal) << e.ErrText();
+		BOOST_LOG_TRIVIAL(fatal) << "加载闭锁逻辑真值表失败！";
 		return;
 	}
 }

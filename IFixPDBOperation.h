@@ -12,8 +12,11 @@ public:
 	IFixPDBOperation(std::string );
 
 	 bool WritePDBValue(const char* tagName, float value) const;
-	 bool ReadPDBValue(const char* tagName, float &) const;
+	 bool ReadPDBValue(const char* tagName, int &) const;
 	 void SetCheckResult(int result);
+	 void SetActoinResult(std::string node, std::string actionClass, int type);
+	 void SetActoinResult(std::string node, int type);
+	 void SetErrorMesage(int index, std::string msg);
 };
 
 

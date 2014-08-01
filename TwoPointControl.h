@@ -10,12 +10,11 @@ public:
 	~TwoPointControl();
 
 	int ToDoCommand(const IFixPDBOperation & pdb, std::string,std::string, int);
-	int SendChooseCommand(const IFixPDBOperation & pdb, std::string tagName, int value);
-	int CheckChooseCommandResult(const IFixPDBOperation & pdb, std::string tagName, int value);
-	int SendControlCommand(const IFixPDBOperation & pdb, std::string tagName, int value);
-	int CheckExecuteCommandResult(const IFixPDBOperation & pdb, std::string tagName, int value);
-	int CheckEquipCurrentState(const IFixPDBOperation & pdb, std::string tagName, int value);
-
+	bool SendChooseCommand(const IFixPDBOperation & pdb, std::string tagName, int value);
+	bool CheckChooseCommandResult(const IFixPDBOperation & pdb, std::string tagName, int value);
+	bool SendControlCommand(const IFixPDBOperation & pdb, std::string tagName, int value);
+	bool CheckExecuteCommandResult(const IFixPDBOperation & pdb, std::string tagName, int value);
+	bool CheckEquipCurrentState(const IFixPDBOperation & pdb, std::string tagName, int value);
 	void SleepSomeSecond(int second) const;
 
 private:

@@ -16,7 +16,8 @@ public:
 	DbOperation();
 	~DbOperation();
 
-	static vector <vector <string> > allLineOn,allLineOff, upMoveOn, upMoveOff, downMoveOn, downMoveOff;
+	//static vector <vector <string> > allLineOn,allLineOff, upMoveOn, upMoveOff, downMoveOn, downMoveOff;
+	static map<int, vector<vector <string>>> actionsInfo; 
 	static map<int, vector<string>> interLockDetail;
 	static map<pair<int, int>, string> tOrf;
 
@@ -57,7 +58,7 @@ public:
 
 private:
 	static SAConnection con; 
-	static void LoadActoinInfo(vector <vector <string> > &content, string cardId);
+	static void LoadActoinInfo(map<int, vector <vector <string> >> &content, int cardId);
 	static void LoadInterLock();
 	static void LoadInterLockResult();
 };
