@@ -103,7 +103,6 @@ int LoadConfig::loadCardInfo()
 int LoadConfig::load(const std::string &fileName)
 {
 	std::string fullpath = boost::filesystem::initial_path<boost::filesystem::path>().string();
-	BOOST_LOG_TRIVIAL(info) << fullpath;
 
 	using boost::property_tree::ptree;
 	ptree pt;
@@ -141,5 +140,6 @@ int LoadConfig::load(const std::string &fileName)
 	dbName = pt.get<std::string>("configuration.db-config.dbname");
 	dbType = pt.get<std::string>("configuration.db-config.dbtype");
 
+	BOOST_LOG_TRIVIAL(info) << "加载配置文件成功！";
 	return 1;
 }

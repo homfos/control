@@ -1,53 +1,47 @@
 #ifndef PSCADA_ITEM_H_
 #define PSCADA_ITEM_H_
 
-#define CHOOSE_ON_SUCCESS (7 || 10)
-#define CHOOSE_ON_FAILURE 9
+//#define CHOOSE_ON_SUCCESS (7 || 10)
+//#define CHOOSE_ON_FAILURE 9
+//
+//#define CHOOSE_OFF_SUCCESS 7
+//#define CHOOSE_OFF_FAILURE 9
+//
+//
 
-#define CHOOSE_OFF_SUCCESS 7
-#define CHOOSE_OFF_FAILURE 9
+//
+//#define GET_REMOTE_SIGNAL 0
+//
+//#define SERIAL_CONTROL_TYPE 1
+//#define PARALLEL_CONTROL_TYPE 2
+//
+//#define TWOPOINT_CONTROL 2
+//#define SINGLE_POINT_CONTROL 3
+//#define SINGLE_POINT_READ_CONTROL 1
+//
+//#define IFIX_PDB_OPERATION 1
+//#define ICV_PDB_OPERATION 2
+//
+//#define MAX_DATA_SIZE 1024 
+//
+//#define SCADA_NODE_NAME "CWJ"
+//
+//#define REMOTE 1
+//#define LOCAL 0
+//
+//#define OPERATION_AREA_TAG "._C04"
+//#define SUBSYSTEM_CODE "POWX"
+//
+//
+//#define CARD_35KV "35kV"
+//#define CARD_400V "400V"
+//#define CARD_1500V "1500V"
+//#define CARD_PARALLEL "Parallel"
+//
+//#define SERIAL 0
+//#define PARALL 1
 
-
-#define ACTION_OK 0
-#define ACTION_ERR -1
-#define ACTION_CHOOSE_DEVICE_TIMEOUT -2
-#define ACTION_DEVICE_TIMEOUT -3
-#define ACTION_RETURN_VALUE_ERROR -4
-
-#define GET_REMOTE_SIGNAL 0
-
-#define SERIAL_CONTROL_TYPE 1
-#define PARALLEL_CONTROL_TYPE 2
-
-#define TWOPOINT_CONTROL 2
-#define SINGLE_POINT_CONTROL 3
-#define SINGLE_POINT_READ_CONTROL 1
-
-#define IFIX_PDB_OPERATION 1
-#define ICV_PDB_OPERATION 2
-
-#define MAX_DATA_SIZE 1024 
-
-#define SCADA_NODE_NAME "CWJ"
-
-#define REMOTE 1
-#define LOCAL 0
-
-#define OPERATION_AREA_TAG "._C04"
-#define OPERATION_AREA_OK 1
-#define SUBSYSTEM_CODE "POWX"
-
-#define HANG_ON_OK 0
-
-#define CARD_35KV "35kV"
-#define CARD_400V "400V"
-#define CARD_1500V "1500V"
-#define CARD_PARALLEL "Parallel"
-
-#define SERIAL 0
-#define PARALL 1
-
-enum Operation_status {
+/*enum Operation_status {
 	operation_area_check_start,
 	operatoin_area_check_end,
 	opeartion_area_check_err,
@@ -62,11 +56,16 @@ enum Operation_status {
 	command_execute_err,
 	execute_finish,
 	fix_error
-};
-
+}*/;
+#define ACTION_OK 0
+#define ACTION_ERR -1
+#define ACTION_CHOOSE_DEVICE_TIMEOUT -2
+#define ACTION_DEVICE_TIMEOUT -3
+#define ACTION_RETURN_VALUE_ERROR -4
+#define OPERATION_AREA_OK 1
+#define HANG_ON_OK 0
 
 #define CHOOSE_COMMAND_ON 130
-//#define CHOOSE_COMMAND_OFF 129
 #define EXECUTE_ON 2
 #define EXECUTE_OFF 1
 #define OPERATION_TIMEOUT 1
@@ -93,5 +92,15 @@ enum Operation_status {
 #define INTERLOCK_ID_ 9
 #define STA_ALIAS_ 10
 
+#define ALL_LINE_ON 0
+#define ALL_LINE_Off 1
+#define UP_MOVE_ON 2
+#define UP_MOVE_OFF 3
+#define DOWN_MOVE_ON 4
+#define DOWN_MOVE_OFF 5
+
+#define START_CARD_EXECUTE 1
+#define STOP_CARD_EXECUTE 2
+#define CHECK_CARD_REQUIRE 3
 
 #endif

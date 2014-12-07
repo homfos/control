@@ -47,6 +47,7 @@ void DbOperation::LoadActoinInfo(vector <vector <string> > &actionsContent, stri
 			action.push_back(std::string(cmd.Field("STA_ALIAS").asString()));
 			actionsContent.push_back(action);
 		}
+		BOOST_LOG_TRIVIAL(info) << "加载卡片动作序列成功！";
 	}
 	catch (SAException& e)
 	{
@@ -95,7 +96,7 @@ void DbOperation::LoadInterLock()
 				item.push_back(std::string(cmd.Field("SDEVTAG_E").asString()));
 			interLockDetail[interlocId] = item;
 		}
-		std::cout << "加载闭锁逻辑基础信息成功！" << std::endl;
+		BOOST_LOG_TRIVIAL(info) << "加载闭锁逻辑基础信息成功！";
 	}
 	catch (SAException& e)
 	{
@@ -118,7 +119,7 @@ void DbOperation::LoadInterLockResult()
 			map<pair<int, int>,string> m;
 			tOrf[p] =std::string(cmd.Field("on_off").asString()); 
 		}
-		std::cout << "加载闭锁逻辑基础信息成功！" << std::endl;
+		BOOST_LOG_TRIVIAL(info) << "加载闭锁逻辑真值表成功！";
 	}
 	catch (SAException& e)
 	{

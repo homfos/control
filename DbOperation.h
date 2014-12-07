@@ -27,7 +27,7 @@ public:
 
 		try
 		{
-			BOOST_LOG_TRIVIAL(info) << "连接数据库类型：" << LoadConfig::dbType << " 数据库名字：" << LoadConfig::dbName << " 用户名：" << LoadConfig::userName << " 密码:"<<LoadConfig::passWord;
+			BOOST_LOG_TRIVIAL(debug) << "连接数据库类型：" << LoadConfig::dbType << " 数据库名字：" << LoadConfig::dbName << " 用户名：" << LoadConfig::userName << " 密码:"<<LoadConfig::passWord;
 
 			con.Connect(LoadConfig::dbName.c_str(), 
 				LoadConfig::userName.c_str(), 
@@ -36,7 +36,7 @@ public:
 			cmd1.Execute();
 			SACommand cmd2(&con, "alter session set NLS_TERRITORY = 'CHINA'");
 			cmd2.Execute();
-			std::cout << "数据库连接成功!" << std::endl;
+			BOOST_LOG_TRIVIAL(info) << "数据库连接成功!";
 		}
 		catch (SAException &x)
 		{
