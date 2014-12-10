@@ -43,9 +43,6 @@ int _tmain(int argc, _TCHAR* argv[])
 		}
 	} while (!isStop);
 	thrd.join();
-	/*ControlManager cm;
-	cm.ProConditionCheck(DbOperation::allLineOff);
-	cm.Run("1");*/
 	return 0;
 }
 

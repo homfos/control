@@ -104,4 +104,13 @@
 #define STOP_CARD_EXECUTE 2
 #define CHECK_CARD_REQUIRE 3
 
+#define CHECK_OK 1
+#define OPERATION_AREA_ERROR 2
+#define HAND_ON_ERROR 3
+
+#define HAVE_DONE 999
+#define HAVE_RUN 100
+#define PDB_INIT_VALUE -100
+
+
 #endif

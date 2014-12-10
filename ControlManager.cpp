@@ -2,6 +2,7 @@
 #include <boost/thread/thread.hpp>
 #include <boost/function.hpp>
 #include <algorithm>
+#include <time.h>
 #include "ControlManager.h"
 #include "PscadaItem.h"
 #include "LoadConfig.h"
@@ -31,10 +32,11 @@ bool ControlManager::CheckOperationArea(const vector<vector<string>> &actionsCon
 {
 	std::string devacttag;
 	std::string actionName;
+	bool isOk = true;
 
 	for (auto it = actionsContent.cbegin(); it != actionsContent.cend(); ++it)
 	{
-		std::shared_ptr<IFixPDBOperation> pdb = PdbOperationFactory(LoadConfig::scadaType, (*it)[STA_ALIAS_ ]);
+		std::shared_ptr<IFixPDBOperation> pdb = PdbOperationFactory(LoadConfig::scadaType, (*it)[STA_ALIAS_ ].substr(0, 3));
 		actionName = (*it)[ACTIONNAME_];
 		devacttag = (*it)[DEVACTTAG_] + OPERATION_AREA;				
 		int value = -100;
@@ -45,26 +47,30 @@ bool ControlManager::CheckOperationArea(const vector<vector<string>> &actionsCon
 			{
 				BOOST_LOG_TRIVIAL(info) << actionName+": 操作场所不具备条件";
 				hmiPdb_.SetErrorMesage(GetIndex(), actionName+"操作场所不具备条件");
-				return false;
+				isOk = false;
 			}
 		}
 		else
 		{
 			hmiPdb_.SetErrorMesage(GetIndex(),"读取iFix错误");
-			BOOST_LOG_TRIVIAL(info) <<"检查操作场所时iFix读取"+devacttag+"错误！";
-			//return false;
+			BOOST_LOG_TRIVIAL(error) <<"检查操作场所时iFix读取"+devacttag+"错误！";
+			isOk = false;
 		}
 	}
-	return true;
+	if (isOk)
+		return true;
+	else
+		return false;
 }
 
 bool ControlManager::CheckHangOn(const vector<vector<string>> &actionsContent)
 {
 	std::string tagName1, tagName2, tagName3, classId;
+	bool isOk = true;
 
 	for (auto it = actionsContent.cbegin(); it != actionsContent.cend(); ++it)
 	{
-		std::shared_ptr<IFixPDBOperation> pdb = PdbOperationFactory(LoadConfig::scadaType, (*it)[STA_ALIAS_]);
+		std::shared_ptr<IFixPDBOperation> pdb = PdbOperationFactory(LoadConfig::scadaType, (*it)[STA_ALIAS_].substr(0, 3));
 		std::vector<std::string> tags;
 		/*	classId = cmd.Field("devaddtag").asString();
 		std::size_t found = classId.find("DLQ");
@@ -76,29 +82,36 @@ bool ControlManager::CheckHangOn(const vector<vector<string>> &actionsContent)
 		tags.push_back(classId + LoadConfig::hangOnTag3);
 		for ( vector<string>::iterator tag = tags.begin(); tag != tags.cend(); ++tag)
 		{
-			int value = -100;
+			int value = PDB_INIT_VALUE;
 			if (pdb->ReadPDBValue(tag->c_str(), value))
 			{
 				if (HANG_ON_OK != value)
 				{
 					BOOST_LOG_TRIVIAL(info) << (*it)[1] + " : 挂牌不具备操作条件";
 					hmiPdb_.SetErrorMesage(GetIndex(), (*it)[1]+"挂牌不具备条件");
-					return false;
+					isOk = false;
+					break;
 				}
 			}
 			else
 			{
 				BOOST_LOG_TRIVIAL(info) << std::string(tag->c_str()) + (": 挂牌判断时读取iFix错误");
-				hmiPdb_.SetErrorMesage(GetIndex(), "iFix读取错误");
-				return false;
+				isOk = false;
+				break;
 			}
 		}
 	}
-	return false;
+	if (isOk)
+		return true;
+	else
+		return false;
 }
 
 bool ControlManager::CheckCloseLogic(string actionId, std::shared_ptr<IFixPDBOperation> pdb)
 {
+	if (actionId == "-1")
+		return true;
+
 	vector<string> tags =DbOperation::interLockDetail[stoi(actionId)]; 
 	int res = 0, weight = 1;
 
@@ -109,7 +122,7 @@ bool ControlManager::CheckCloseLogic(string actionId, std::shared_ptr<IFixPDBOpe
 	}
 	for (auto it = tags.cbegin() + 2; it != tags.cend(); ++it)
 	{
-		int value = -100;
+		int value = PDB_INIT_VALUE;
 		if (!pdb->ReadPDBValue(it->c_str(), value))
 			return false;
 		res += (value - 1)*weight;
@@ -183,20 +196,28 @@ bool ControlManager::CheckCloseLogic(string actionId, std::shared_ptr<IFixPDBOpe
 bool ControlManager::ProConditionCheck(int cardId)
 {
 	std::shared_ptr<IFixPDBOperation> pdb = PdbOperationFactory(LoadConfig::scadaType, "OCC");
+	bool isOk = true;
 
 	if (!CheckOperationArea(DbOperation::actionsInfo[cardId]))
 	{
-		pdb->SetCheckResult(2);
-		return false;
+		isOk = false;
+		pdb->SetCheckResult(OPERATION_AREA_ERROR);
 	}
 	if (!CheckHangOn(DbOperation::actionsInfo[cardId]))
 	{
-		pdb->SetCheckResult(2);
-		return false;	
+		isOk = false;	
+		pdb->SetCheckResult(HAND_ON_ERROR);
 	}
 
-	pdb->SetCheckResult(1);
-	return true;
+	if (isOk)
+	{
+		pdb->SetCheckResult(CHECK_OK);
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
 
 int ControlManager::GetIndex()
@@ -218,7 +239,7 @@ void ControlManager::RunAction(vector<vector<string>> &actionsContent)
 		if(!GetRunFlag())
 			return;
 
-		std::shared_ptr<IFixPDBOperation> pdbPtr = PdbOperationFactory(LoadConfig::scadaType, (*it)[STA_ALIAS_]);
+		std::shared_ptr<IFixPDBOperation> pdbPtr = PdbOperationFactory(LoadConfig::scadaType, (*it)[STA_ALIAS_].substr(0, 3));
 		int targetValue = std::stoi((*it)[ACT_AVALUE_]);
 		int actionId = std::stoi((*it)[ACTIONID_ ]);
 		string classType = ((*it)[DEV_CLASS_ID_]);
@@ -226,8 +247,8 @@ void ControlManager::RunAction(vector<vector<string>> &actionsContent)
 		statusTagName = ((*it)[DEVADDTAG_]);
 		nodeName = (*it)[STA_ALIAS_];
 		std::shared_ptr<TwoPointControl> actionPtr = ControlTypeFactoty();
-		int res;
-		if (actionPtr->CheckEquipCurrentState(*pdbPtr, tagName, res))
+		int res = PDB_INIT_VALUE;
+		if (actionPtr->CheckEquipCurrentState(*pdbPtr, tagName + REMOTE_FEEDBACK, res))
 		{
 			if (res == targetValue + LoadConfig::twoPointOffset)
 				continue;
@@ -236,13 +257,13 @@ void ControlManager::RunAction(vector<vector<string>> &actionsContent)
 		{
 			return;
 		}
-		if (!CheckCloseLogic((*it)[ACTIONID_], pdbPtr))
+		if (!CheckCloseLogic((*it)[INTERLOCK_ID_], pdbPtr))
 			continue;
 		if (actionPtr->ToDoCommand(*pdbPtr, tagName, statusTagName, targetValue) != ACTION_OK)
 		{
 				isOk = false;
 				hmiPdb_.SetActoinResult((*it)[STA_ALIAS_], classType, targetValue);
-				hmiPdb_.SetErrorMesage(GetIndex(), (*it)[ACTIONNAME_]+"执行失败");
+				//hmiPdb_.SetErrorMesage(GetIndex(), (*it)[ACTIONNAME_]+"执行失败");
 		}
 	}	
 	if (isOk)
@@ -253,16 +274,21 @@ void ControlManager::RunAction(vector<vector<string>> &actionsContent)
 
 void ControlManager::Run(int cardId)
 {	
-	boost::function<void(vector<vector<string>> &)> f;
-	f = boost::bind(&ControlManager::RunAction, this, _1);
+	time_t start, ends;
+	boost::function<void(vector<vector<string>> &)> f = boost::bind(&ControlManager::RunAction, this, _1);
 	boost::thread_group tg;
 	map<int,vector<vector<string>>> actionGroups;
+
+	start = time(NULL);
 	GetGroupContent(actionGroups, DbOperation::actionsInfo[cardId]);
 	for (map<int,vector<vector<string>>>::const_iterator it = actionGroups.cbegin(); it != actionGroups.cend(); ++it)
 	{
 		tg.add_thread(new boost::thread(f, (*it).second)); 
 	}
 	tg.join_all();
+	ends = time(NULL);
+	BOOST_LOG_TRIVIAL(info) << "执行耗时： " + std::to_string(static_cast<long long>(difftime(ends,start))) + "秒";
+	hmiPdb_.SetErrorMesage(GetIndex(), string("执行耗时： " + std::to_string(static_cast<long long>(difftime(ends,start)))+ "秒").c_str());
 }
 
 std::shared_ptr<TwoPointControl> ControlManager::ControlTypeFactoty()

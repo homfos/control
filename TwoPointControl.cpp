@@ -27,7 +27,7 @@ bool TwoPointControl::SendChooseCommand(const IFixPDBOperation & pdb, std::strin
 	return pdb.WritePDBValue(tagName.c_str(), value);
 }
 
-bool TwoPointControl::CheckChooseCommandResult(const IFixPDBOperation & pdb, std::string tagName, int value)
+bool TwoPointControl::CheckCommandResult(const IFixPDBOperation & pdb, std::string tagName, int &value)
 {
 	return pdb.ReadPDBValue(tagName.c_str(), value);
 }
@@ -37,12 +37,12 @@ bool TwoPointControl::SendControlCommand(const IFixPDBOperation & pdb, std::stri
 	return pdb.WritePDBValue(tagName.c_str(), value);
 }
 
-bool TwoPointControl::CheckExecuteCommandResult(const IFixPDBOperation & pdb, std::string tagName, int value)
+bool TwoPointControl::CheckExecuteCommandResult(const IFixPDBOperation & pdb, std::string tagName, int &value)
 {
 	return pdb.ReadPDBValue(tagName.c_str(), value);
 }
 
-bool TwoPointControl::CheckEquipCurrentState(const IFixPDBOperation & pdb, std::string tagName, int value)
+bool TwoPointControl::CheckEquipCurrentState(const IFixPDBOperation & pdb, std::string tagName, int &value)
 {
 	return pdb.ReadPDBValue(tagName.c_str(), value);
 }
@@ -52,12 +52,12 @@ int TwoPointControl::ToDoCommand(const IFixPDBOperation & pdb, std::string tagNa
 	bool chooseFlag = false;
 	int ret;
 
-	if(SendChooseCommand(pdb,  tagName + LoadConfig::remoteControl, targetValue + LoadConfig::chooseCommandOffset))
+	if(!SendChooseCommand(pdb,  tagName + LoadConfig::remoteControl, targetValue + LoadConfig::chooseCommandOffset))
 		return ACTION_ERR;
 	for (int i = 0; i < LoadConfig::commandTimeout; i++)
 	{
 		SleepSomeSecond(1);
-		if (CheckChooseCommandResult(pdb,  tagName + LoadConfig::remoteControl, ret))
+		if (CheckCommandResult(pdb,  tagName + LoadConfig::remoteControl, ret))
 		{
 			if (ret == LoadConfig::chooseFeedBackOffset)
 			{
@@ -74,7 +74,7 @@ int TwoPointControl::ToDoCommand(const IFixPDBOperation & pdb, std::string tagNa
 
 	if (chooseFlag)
 	{
-		if (SendControlCommand(pdb, tagName+LoadConfig::remoteControl, targetValue + LoadConfig::twoPointOffset))
+		if (!SendControlCommand(pdb, tagName+LoadConfig::remoteControl, targetValue + LoadConfig::twoPointOffset))
 			return ACTION_ERR;
 
 		int  i = 0;

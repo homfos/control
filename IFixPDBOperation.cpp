@@ -30,7 +30,7 @@ void IFixPDBOperation::SetErrorMesage(int index, std::string msg)
 
 	eda_delete_ntf(group, ntf);
 	eda_delete_group(group);
-	BOOST_LOG_TRIVIAL(info) << std::string("Write PDB") + "["+ tagName +"]:"+ msg;
+	BOOST_LOG_TRIVIAL(debug) << std::string("Write PDB") + "["+ tagName +"]:"+ msg;
 }
 
 void IFixPDBOperation::SetCheckResult(int result)
@@ -100,7 +100,7 @@ bool IFixPDBOperation::WritePDBValue(const char* tagName, float value) const
 	eda_delete_ntf(group, ntf);
 	eda_delete_group(group);
 
-	BOOST_LOG_TRIVIAL(info) << std::string("Write PDB") + "["+ tagName +"]:"+ std::to_string(static_cast<long double>(value)) + " Return Number: " + std::to_string((long long)err);
+	BOOST_LOG_TRIVIAL(debug) << std::string("Write PDB") + "["+ tagName +"]:"+ std::to_string(static_cast<long double>(value)) + " Error Number: " + std::to_string((long long)err);
 
 	if (err == 0)
 		return true;
@@ -136,7 +136,7 @@ bool IFixPDBOperation::ReadPDBValue( const char* tagName, int &res) const
 	    eda_delete_ntf(eh, hT);
 	    eda_delete_group(eh);
 
-		BOOST_LOG_TRIVIAL(info) << std::string("Read PDB") + "["+ tagName +"]:"+ std::to_string(static_cast<long double>(value)) + " Return Number: " + std::to_string((long long)err);
+		BOOST_LOG_TRIVIAL(debug) << std::string("Read PDB") + "["+ tagName +"]:"+ std::to_string(static_cast<long double>(value)) + " Error Number: " + std::to_string((long long)err);
 		res = value;
 	    if (err == 0)
 	        return true;
