@@ -33,10 +33,9 @@ void PollHmiEvent::PollEvent()
 				cm.Run(cardId);
 				break;
 			case CHECK_CARD_REQUIRE:
+				BOOST_LOG_TRIVIAL(info) << "开始检查执行条件：" + std::to_string(static_cast<long long>(cardId)); 
 				cm.ProConditionCheck(cardId);
-				break;
-			case STOP_CARD_EXECUTE:
-				cm.SetRunFlag(false);
+				BOOST_LOG_TRIVIAL(info) << "检查执行结束：" + std::to_string(static_cast<long long>(cardId)); 
 				break;
 			default:
 				break;
@@ -53,4 +52,23 @@ void PollHmiEvent::Start()
 	boost::function<void()> f = boost::bind(&PollHmiEvent::PollEvent,this);
 	boost::thread thrd( f );
 	thrd.join();
+}
+
+void PollHmiEvent::ConcelAction()
+{
+	while (isRun)
+	{
+		int result = PDB_INIT_VALUE;
+		SleepSomeSecond(1);
+		if (pdb.ReadPDBValue(tag.c_str(), result))
+		{
+			int commandType = result % 10;
+			if (commandType == STOP_CARD_EXECUTE)
+			{
+				ControlManager::SetRunFlag(false);
+				BOOST_LOG_TRIVIAL(info) << "读到HMI终止指令：" + std::to_string(static_cast<long long>(result));
+				pdb.WritePDBValue(tag.c_str(), HAVE_CONCEL);
+			}
+		}
+	}
 }

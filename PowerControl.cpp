@@ -30,8 +30,10 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 	ActionDataInit();
 	PollHmiEvent pollEvent;
-	boost::function<void()> f = boost::bind(&PollHmiEvent::PollEvent,pollEvent);
-	boost::thread thrd( f );
+	boost::function<void()> workF = boost::bind(&PollHmiEvent::PollEvent,pollEvent);
+	boost::function<void()> concelF = boost::bind(&PollHmiEvent::ConcelAction,pollEvent);
+	boost::thread workThrd(workF);
+	boost::thread concelThrd(concelF);
 	do 
 	{
 		PrintBanner();	
@@ -42,7 +44,8 @@ int _tmain(int argc, _TCHAR* argv[])
 			PollHmiEvent::Stop();
 		}
 	} while (!isStop);
-	thrd.join();
+	workThrd.join();
+	concelThrd.join();
 	return 0;
 }
 

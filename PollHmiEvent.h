@@ -7,8 +7,10 @@
 
 class PollHmiEvent{
 public:
-	PollHmiEvent():tag("OCCPOW_CKKP001_001"),node("OCC"),pdb(node){}
+	//PollHmiEvent():tag("OCCPOW_CKKP001_001"),node("OCC"),pdb(node){}
+	PollHmiEvent():tag("OCCPOW_CKKP001_001"),node("RMB"),pdb(node){}
 	void PollEvent();
+	void ConcelAction();
 	void Start();
 	static void Stop() { isRun = false; }
 

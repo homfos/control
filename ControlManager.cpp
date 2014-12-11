@@ -251,29 +251,41 @@ void ControlManager::RunAction(vector<vector<string>> &actionsContent)
 		if (actionPtr->CheckEquipCurrentState(*pdbPtr, tagName + REMOTE_FEEDBACK, res))
 		{
 			if (res == targetValue + LoadConfig::twoPointOffset)
+			{
+				BOOST_LOG_TRIVIAL(info) << (*it)[ACTIONNAME_]+": 执行成功"; 
 				continue;
+			}
 		}
 		else
 		{
 			return;
 		}
 		if (!CheckCloseLogic((*it)[INTERLOCK_ID_], pdbPtr))
+		{
+			BOOST_LOG_TRIVIAL(info) << (*it)[ACTIONNAME_]+": 闭锁逻辑不具备"; 
 			continue;
+		}
 		if (actionPtr->ToDoCommand(*pdbPtr, tagName, statusTagName, targetValue) != ACTION_OK)
 		{
-				isOk = false;
-				hmiPdb_.SetActoinResult((*it)[STA_ALIAS_], classType, targetValue);
-				//hmiPdb_.SetErrorMesage(GetIndex(), (*it)[ACTIONNAME_]+"执行失败");
+			isOk = false;
+			hmiPdb_.SetActoinResult((*it)[STA_ALIAS_], classType, targetValue);
+			//hmiPdb_.SetErrorMesage(GetIndex(), (*it)[ACTIONNAME_]+"执行失败");
+			BOOST_LOG_TRIVIAL(info) << (*it)[ACTIONNAME_]+": 执行失败"; 
+		}
+		else
+		{
+			BOOST_LOG_TRIVIAL(info) << (*it)[ACTIONNAME_]+": 执行成功"; 
 		}
 	}	
 	if (isOk)
-		hmiPdb_.SetActoinResult(nodeName, 1);
+		hmiPdb_.SetActoinResult(nodeName, COMMAND_ACTION_OK);
 	else
-		hmiPdb_.SetActoinResult(nodeName, 2);
+		hmiPdb_.SetActoinResult(nodeName, COMMAND_ACTOIN_ERROR);
 }
 
 void ControlManager::Run(int cardId)
 {	
+	BOOST_LOG_TRIVIAL(info) << "开始执行卡片：" + std::to_string(static_cast<long long>(cardId)); 
 	time_t start, ends;
 	boost::function<void(vector<vector<string>> &)> f = boost::bind(&ControlManager::RunAction, this, _1);
 	boost::thread_group tg;

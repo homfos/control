@@ -110,7 +110,11 @@
 
 #define HAVE_DONE 999
 #define HAVE_RUN 100
+#define HAVE_CONCEL 101
 #define PDB_INIT_VALUE -100
+
+#define COMMAND_ACTION_OK 1
+#define COMMAND_ACTOIN_ERROR 2
 
 
 #endif

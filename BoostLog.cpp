@@ -51,6 +51,10 @@ void LogInit()
 		<< ": <" << logging::trivial::severity
 		<< "> " << expr::smessage
 		);
+	sink_console->set_filter
+		(
+		logging::trivial::severity >= logging::trivial::info
+		);
 
 	core->add_sink(sink);
 	core->add_sink(sink_console);
