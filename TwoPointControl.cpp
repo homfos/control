@@ -83,11 +83,15 @@ int TwoPointControl::ToDoCommand(const IFixPDBOperation & pdb, std::string tagNa
 			if (i == LoadConfig::feedBackTimeout)
 				return ACTION_ERR;
 			SleepSomeSecond(1);
-			int ret = -100;
+			int ret = PDB_INIT_VALUE;
 			if (CheckExecuteCommandResult(pdb, statusTagName + LoadConfig::remoteControl, ret))
 			{
 				if (ret == EXECUTE_FEEDBACK_OFFSET)
 					break;
+				if (ret == DEVICE_REJECT_ACTION)
+				{
+					return ACTION_RETURN_VALUE_ERROR;
+				}
 			}
 			i++;
 		}
@@ -95,7 +99,7 @@ int TwoPointControl::ToDoCommand(const IFixPDBOperation & pdb, std::string tagNa
 		for (int i = 0; i < LoadConfig::feedBackTimeout; i++)
 		{
 			SleepSomeSecond(1);
-			int ret = -100;
+			int ret = PDB_INIT_VALUE;
 			if (CheckEquipCurrentState(pdb, statusTagName + LoadConfig::remoteFeedBack, ret))
 			{
 				if( ret == targetValue + LoadConfig::twoPointOffset)

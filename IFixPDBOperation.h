@@ -13,6 +13,7 @@ public:
 
 	 bool WritePDBValue(const char* tagName, float value) const;
 	 bool ReadPDBValue(const char* tagName, int &) const;
+	 bool ReadPDBValueNoLog(const char* tagName, int &) const;
 	 void SetCheckResult(int result);
 	 void SetActoinResult(std::string node, std::string actionClass, int type);
 	 void SetActoinResult(std::string node, int type);

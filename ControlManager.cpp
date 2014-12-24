@@ -8,7 +8,7 @@
 #include "LoadConfig.h"
 #include "DbOperation.h"
 
-ControlManager::ControlManager():index_(0),hmiPdb_("OCC")
+ControlManager::ControlManager():index_(0),hmiR1Pdb("OCCR1"),hmiR2Pdb("OCCR2")
 {
 }
 
@@ -16,7 +16,7 @@ ControlManager::~ControlManager()
 {
 }
 
-bool ControlManager::flag = false;
+bool ControlManager::flag = true;
 
 void ControlManager::SetRunFlag(bool isRun)
 {
@@ -46,14 +46,14 @@ bool ControlManager::CheckOperationArea(const vector<vector<string>> &actionsCon
 			if (value != OPERATION_AREA_OK)
 			{
 				BOOST_LOG_TRIVIAL(info) << actionName+": 操作场所不具备条件";
-				hmiPdb_.SetErrorMesage(GetIndex(), actionName+"操作场所不具备条件");
+				HmiSetErrorMesage("操作场所不具备条件");
 				isOk = false;
 			}
 		}
 		else
 		{
-			hmiPdb_.SetErrorMesage(GetIndex(),"读取iFix错误");
 			BOOST_LOG_TRIVIAL(error) <<"检查操作场所时iFix读取"+devacttag+"错误！";
+			HmiSetErrorMesage("操作场所不具备条件");
 			isOk = false;
 		}
 	}
@@ -88,7 +88,7 @@ bool ControlManager::CheckHangOn(const vector<vector<string>> &actionsContent)
 				if (HANG_ON_OK != value)
 				{
 					BOOST_LOG_TRIVIAL(info) << (*it)[1] + " : 挂牌不具备操作条件";
-					hmiPdb_.SetErrorMesage(GetIndex(), (*it)[1]+"挂牌不具备条件");
+					HmiSetErrorMesage("挂牌不具备操作条件");
 					isOk = false;
 					break;
 				}
@@ -138,80 +138,29 @@ bool ControlManager::CheckCloseLogic(string actionId, std::shared_ptr<IFixPDBOpe
 	return false;
 }
 
-//std::shared_ptr<std::string> ControlManager::CheckCloseLogic(std::string cardId, std::string sql, string nodeStr, int offSet)
-//{
-//	DbOperation::connect_db();
-//	SACommand cmd(&DbOperation::get_connection(), sql.c_str());
-//	std::shared_ptr<std::string> checkResult = std::make_shared<std::string>();
-//	std::shared_ptr<IFixPDBOperation> pdb = PdbOperationFactory(LoadConfig::scadaType, nodeStr);
-
-//	int stagClass;
-//	std::string classID;
-//	std::vector<std::string> tags;
-//	int res = 0, weight = 1;
-
-//	try
-//	{
-//		cmd.Execute();
-//		while (cmd.FetchNext()) 
-//		{
-//			stagClass = cmd.Field("STAG_CLASS").asLong();
-//			classID = cmd.Field("DEV_CLASS_ID").asString();
-//			tags.push_back(std::string(cmd.Field("SDEVTAG_A").asString()));
-//			tags.push_back(std::string(cmd.Field("SDEVTAG_B").asString()));
-//			tags.push_back(std::string(cmd.Field("SDEVTAG_C").asString()));
-//			tags.push_back(std::string(cmd.Field("SDEVTAG_D").asString()));
-//			tags.push_back(std::string(cmd.Field("SDEVTAG_E").asString()));
-
-//			for (auto it = tags.begin(); it != tags.end(); ++it)
-//			{
-//				if(it->size()> 5)
-//				{
-//					float value = 0;
-//					if (!pdb->ReadPDBValue(it->c_str(), value))
-//						return nullptr;
-//					res += (value - offSet)*weight;
-//					weight *= 10;
-//				}
-//			}
-//			sql = "SELECT * FROM t_scada_torf where STAG_CLASS = " + std::to_string(static_cast<long long>(stagClass)) + " and STAGVALUE = "+ std::to_string(static_cast<long long>(res));
-//			SACommand sub_cmd(&DbOperation::get_connection(), sql.c_str());
-//			sub_cmd.Execute();
-//			while (sub_cmd.FetchNext())
-//			{
-//				std::string onOff = sub_cmd.Field("on_off").asString();
-//				if(onOff != "T")
-//					checkResult->append(std::string(sub_cmd.Field("lockname").asString()) + ": 闭锁逻辑不具备条件\n");
-//			}	
-//		}
-//	}
-//	catch (SAException& e)
-//	{
-//		return nullptr;
-//	}
-
-//	return checkResult;
-//}
-
 bool ControlManager::ProConditionCheck(int cardId)
 {
-	std::shared_ptr<IFixPDBOperation> pdb = PdbOperationFactory(LoadConfig::scadaType, "OCC");
+	std::shared_ptr<IFixPDBOperation> r1Pdb = PdbOperationFactory(LoadConfig::scadaType, "OCCR1");
+	std::shared_ptr<IFixPDBOperation> r2Pdb = PdbOperationFactory(LoadConfig::scadaType, "OCCR2");
 	bool isOk = true;
 
 	if (!CheckOperationArea(DbOperation::actionsInfo[cardId]))
 	{
 		isOk = false;
-		pdb->SetCheckResult(OPERATION_AREA_ERROR);
+		r1Pdb->SetCheckResult(OPERATION_AREA_ERROR);
+		r2Pdb->SetCheckResult(OPERATION_AREA_ERROR);
 	}
 	if (!CheckHangOn(DbOperation::actionsInfo[cardId]))
 	{
 		isOk = false;	
-		pdb->SetCheckResult(HAND_ON_ERROR);
+		r1Pdb->SetCheckResult(HAND_ON_ERROR);
+		r2Pdb->SetCheckResult(HAND_ON_ERROR);
 	}
 
 	if (isOk)
 	{
-		pdb->SetCheckResult(CHECK_OK);
+		r1Pdb->SetCheckResult(CHECK_OK);
+		r2Pdb->SetCheckResult(CHECK_OK);
 		return true;
 	}
 	else
@@ -223,15 +172,14 @@ bool ControlManager::ProConditionCheck(int cardId)
 int ControlManager::GetIndex()
 {
 	boost::mutex::scoped_lock lock(io_mutex);
-	long long i = index_++;
-	return i % 10;
+	int i = index_++;
+	return i;
 }
 
 void ControlManager::RunAction(vector<vector<string>> &actionsContent)
 {
 	std::string tagName, statusTagName, nodeName;
 	bool isOk = true;
-	SetRunFlag(true);
 	std::sort(actionsContent.begin(), actionsContent.end(), CompareAction);
 
 	for (auto it = actionsContent.begin(); it != actionsContent.end(); ++it)
@@ -248,44 +196,54 @@ void ControlManager::RunAction(vector<vector<string>> &actionsContent)
 		nodeName = (*it)[STA_ALIAS_];
 		std::shared_ptr<TwoPointControl> actionPtr = ControlTypeFactoty();
 		int res = PDB_INIT_VALUE;
+		HmiSetActionResult((*it)[STA_ALIAS_], classType, targetValue);
 		if (actionPtr->CheckEquipCurrentState(*pdbPtr, tagName + REMOTE_FEEDBACK, res))
 		{
 			if (res == targetValue + LoadConfig::twoPointOffset)
 			{
 				BOOST_LOG_TRIVIAL(info) << (*it)[ACTIONNAME_]+": 执行成功"; 
+				HmiSetActionResult((*it)[STA_ALIAS_], classType, SINGLE_STEP_OK);
 				continue;
 			}
 		}
-		else
-		{
-			return;
-		}
 		if (!CheckCloseLogic((*it)[INTERLOCK_ID_], pdbPtr))
 		{
-			BOOST_LOG_TRIVIAL(info) << (*it)[ACTIONNAME_]+": 闭锁逻辑不具备"; 
+			isOk = false;
+			BOOST_LOG_TRIVIAL(info) << (*it)[ACTIONNAME_]+":逻辑闭锁"; 
+			HmiSetActionResult((*it)[STA_ALIAS_], classType, SINGLE_STEP_ERROR);
+			HmiSetErrorMesage((*it)[1]+"逻辑闭锁");
 			continue;
 		}
-		if (actionPtr->ToDoCommand(*pdbPtr, tagName, statusTagName, targetValue) != ACTION_OK)
+		int commandRet = DEVICE_REJECT_ACTION;
+		commandRet = actionPtr->ToDoCommand(*pdbPtr, tagName, statusTagName, targetValue);
+		if (commandRet != ACTION_OK)
 		{
 			isOk = false;
-			hmiPdb_.SetActoinResult((*it)[STA_ALIAS_], classType, targetValue);
-			//hmiPdb_.SetErrorMesage(GetIndex(), (*it)[ACTIONNAME_]+"执行失败");
+
+			if (commandRet == ACTION_RETURN_VALUE_ERROR)
+				HmiSetErrorMesage((*it)[ACTIONNAME_]+":控制命令发送成功，但设备未动作");
+			else
+				HmiSetErrorMesage((*it)[ACTIONNAME_]+":执行失败");
+
+			HmiSetActionResult((*it)[STA_ALIAS_], classType, SINGLE_STEP_ERROR);
 			BOOST_LOG_TRIVIAL(info) << (*it)[ACTIONNAME_]+": 执行失败"; 
 		}
 		else
 		{
+			HmiSetActionResult((*it)[STA_ALIAS_], classType, SINGLE_STEP_OK);
 			BOOST_LOG_TRIVIAL(info) << (*it)[ACTIONNAME_]+": 执行成功"; 
 		}
 	}	
 	if (isOk)
-		hmiPdb_.SetActoinResult(nodeName, COMMAND_ACTION_OK);
+		HmiSetActionResult(nodeName, COMMAND_ACTION_OK);
 	else
-		hmiPdb_.SetActoinResult(nodeName, COMMAND_ACTOIN_ERROR);
+		HmiSetActionResult(nodeName, COMMAND_ACTOIN_ERROR);
 }
 
 void ControlManager::Run(int cardId)
 {	
 	BOOST_LOG_TRIVIAL(info) << "开始执行卡片：" + std::to_string(static_cast<long long>(cardId)); 
+	SetRunFlag(true);
 	time_t start, ends;
 	boost::function<void(vector<vector<string>> &)> f = boost::bind(&ControlManager::RunAction, this, _1);
 	boost::thread_group tg;
@@ -300,7 +258,7 @@ void ControlManager::Run(int cardId)
 	tg.join_all();
 	ends = time(NULL);
 	BOOST_LOG_TRIVIAL(info) << "执行耗时： " + std::to_string(static_cast<long long>(difftime(ends,start))) + "秒";
-	hmiPdb_.SetErrorMesage(GetIndex(), string("执行耗时： " + std::to_string(static_cast<long long>(difftime(ends,start)))+ "秒").c_str());
+	HmiSetErrorMesage(string("执行完成，共耗时: " + std::to_string(static_cast<long long>(difftime(ends,start)))+ "秒").c_str());
 }
 
 std::shared_ptr<TwoPointControl> ControlManager::ControlTypeFactoty()

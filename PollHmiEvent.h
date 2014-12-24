@@ -7,8 +7,8 @@
 
 class PollHmiEvent{
 public:
-	//PollHmiEvent():tag("OCCPOW_CKKP001_001"),node("OCC"),pdb(node){}
-	PollHmiEvent():tag("OCCPOW_CKKP001_001"),node("RMB"),pdb(node){}
+	PollHmiEvent():tag("OCCPOW_CKKP001_001"),checkFeedTag("OCCPOW_CKKP001_002"), 
+		actionFeedTag("OCCPOW_CKKP001_003"), r1Pdb("OCCR1"), r2Pdb("OCCR2"), pdb("OCC"){}
 	void PollEvent();
 	void ConcelAction();
 	void Start();
@@ -20,9 +20,14 @@ private:
 		boost::this_thread::sleep(boost::posix_time::seconds(second));
 	}
 
-	const std::string tag;
-	const std::string node; 
-	IFixPDBOperation pdb;
+	void WriteOCCHmiTag(std::string tagName, int value)
+	{
+		r1Pdb.WritePDBValue(tagName.c_str(), value);
+		r2Pdb.WritePDBValue(tagName.c_str(), value);
+	}
+
+	const std::string tag, checkFeedTag, actionFeedTag;
+	IFixPDBOperation r1Pdb, r2Pdb, pdb;
 	static volatile bool isRun;
 };
 

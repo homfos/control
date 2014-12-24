@@ -37,8 +37,35 @@ public:
 private:
 	static bool flag;
 	boost::mutex io_mutex;
-	long long index_;
-	IFixPDBOperation hmiPdb_;
+	int index_;
+	IFixPDBOperation hmiR1Pdb, hmiR2Pdb;
+
+	void HmiSetErrorMesage(string msg)
+	{
+		int index = GetIndex();
+		if (index < 9)
+		{
+			hmiR1Pdb.SetErrorMesage(index, msg);
+			hmiR2Pdb.SetErrorMesage(index, msg);
+		}
+		else
+		{
+			hmiR1Pdb.SetErrorMesage(9, "错误过多，详见一次图");
+			hmiR2Pdb.SetErrorMesage(9, "错误过多，详见一次图");
+		}
+	}
+
+	void HmiSetActionResult(string nodeName, int value)
+	{
+		hmiR1Pdb.SetActoinResult(nodeName, value);
+		hmiR2Pdb.SetActoinResult(nodeName, value);
+	}
+
+	void HmiSetActionResult(string nodeName, string actionClass, int value)
+	{
+		hmiR1Pdb.SetActoinResult(nodeName, actionClass,value);
+		hmiR2Pdb.SetActoinResult(nodeName, actionClass,value);
+	}
 };
 
 

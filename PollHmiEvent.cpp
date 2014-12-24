@@ -9,28 +9,34 @@ volatile bool PollHmiEvent::isRun(true);
 void PollHmiEvent::PollEvent()
 {
 	time_t start, ends;  
-	//ControlManager cm;
-	//cm.ProConditionCheck(200);
-	//cm.Run(200);
+	WriteOCCHmiTag(tag.c_str(), 0);
+	WriteOCCHmiTag(checkFeedTag.c_str(), 0);
+	WriteOCCHmiTag(actionFeedTag.c_str(), 0);
 	while (isRun)
 	{
 		start = time(NULL);
 		int result = PDB_INIT_VALUE;
 
 		SleepSomeSecond(1);
-		if (pdb.ReadPDBValue(tag.c_str(), result))
+		if (pdb.ReadPDBValueNoLog(tag.c_str(), result))
 		{
 			if (result < 2000 || result > 2100)
 				continue;
+			WriteOCCHmiTag(tag.c_str(), HAVE_READ);
+			WriteOCCHmiTag(checkFeedTag.c_str(), HAVE_RUN);
 			BOOST_LOG_TRIVIAL(info) << "读到HMI指令：" + std::to_string(static_cast<long long>(result));
 			int cardId = result / 10;
 			int commandType = result % 10;
 			ControlManager cm;
-			pdb.WritePDBValue(tag.c_str(), HAVE_RUN);
 			switch(commandType)
 			{
 			case START_CARD_EXECUTE:
-				cm.Run(cardId);
+				if(cm.ProConditionCheck(cardId))
+				{
+					WriteOCCHmiTag(actionFeedTag.c_str(), HAVE_RUN_CARD);
+					cm.Run(cardId);
+				}
+				WriteOCCHmiTag(actionFeedTag.c_str(), HAVE_DONE);
 				break;
 			case CHECK_CARD_REQUIRE:
 				BOOST_LOG_TRIVIAL(info) << "开始检查执行条件：" + std::to_string(static_cast<long long>(cardId)); 
@@ -41,8 +47,6 @@ void PollHmiEvent::PollEvent()
 				break;
 			}
 			ends = time(NULL);
-			pdb.WritePDBValue(tag.c_str(), HAVE_DONE);
-			pdb.SetErrorMesage(cm.GetIndex(), std::to_string(static_cast<long long>(difftime(ends,start))).c_str());
 		}
 	}
 }
@@ -60,14 +64,15 @@ void PollHmiEvent::ConcelAction()
 	{
 		int result = PDB_INIT_VALUE;
 		SleepSomeSecond(1);
-		if (pdb.ReadPDBValue(tag.c_str(), result))
+		if (pdb.ReadPDBValueNoLog(tag.c_str(), result))
 		{
 			int commandType = result % 10;
 			if (commandType == STOP_CARD_EXECUTE)
 			{
 				ControlManager::SetRunFlag(false);
 				BOOST_LOG_TRIVIAL(info) << "读到HMI终止指令：" + std::to_string(static_cast<long long>(result));
-				pdb.WritePDBValue(tag.c_str(), HAVE_CONCEL);
+				WriteOCCHmiTag(actionFeedTag.c_str(), HAVE_CONCEL);
+				WriteOCCHmiTag(tag.c_str(), HAVE_READ);
 			}
 		}
 	}
