@@ -8,7 +8,7 @@
 class PollHmiEvent{
 public:
 	PollHmiEvent():tag("OCCPOW_CKKP001_001"),checkFeedTag("OCCPOW_CKKP001_002"), 
-		actionFeedTag("OCCPOW_CKKP001_003"), r1Pdb("OCCR1"), r2Pdb("OCCR2"), pdb("OCC"){}
+		actionFeedTag("OCCPOW_CKKP001_003"), r1Pdb("OCCR1"), r2Pdb("OCCR2"), pdb(LoadConfig::hostName){}
 	void PollEvent();
 	void ConcelAction();
 	void Start();
